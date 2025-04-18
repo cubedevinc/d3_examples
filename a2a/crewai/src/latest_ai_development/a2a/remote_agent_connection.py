@@ -32,26 +32,6 @@ class RemoteAgentConnections:
       self,
       request: TaskSendParams
   ) -> Task | None:
-    if self.card.capabilities.streaming:
-      task = None
-      async for response in self.agent_client.send_task_streaming(request.model_dump()):
-        merge_metadata(response.result, request)
-        # For task status updates, we need to propagate metadata and provide
-        # a unique message id.
-        if (hasattr(response.result, 'status') and
-            hasattr(response.result.status, 'message') and
-            response.result.status.message):
-          merge_metadata(response.result.status.message, request.message)
-          m = response.result.status.message
-          if not m.metadata:
-            m.metadata = {}
-          if 'message_id' in m.metadata:
-            m.metadata['last_message_id'] = m.metadata['message_id']
-          m.metadata['message_id'] = str(uuid.uuid4())
-        if hasattr(response.result, 'final') and response.result.final:
-          break
-      return task
-    else: # Non-streaming
       response = await self.agent_client.send_task(request.model_dump())
       merge_metadata(response.result, request)
       # For task status updates, we need to propagate metadata and provide
