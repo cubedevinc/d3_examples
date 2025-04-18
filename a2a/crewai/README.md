@@ -55,6 +55,6 @@ The entry‑point is exposed as the [**console‑script**] `run_crew` in `pyproj
 ```bash
 OPENAI_API_KEY="<your‑openai‑key>" \
 A2A_SECRET="<your‑jwt‑secret>" \
-A2A_AGENT_ADDRESS="https://ai-engineer.cubecloud.dev/api/a2a/..." \
+A2A_AGENT_URL="https://ai-engineer.cubecloud.dev/api/a2a/..." \
 uv run run_crew
 ```

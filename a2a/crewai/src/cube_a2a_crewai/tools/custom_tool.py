@@ -59,10 +59,10 @@ class SendTaskToolInput(BaseModel):
 def send_task(agent_name: str, message: str) -> str:
     """Send a task to a remote agent."""
     try:
-        address = os.getenv('A2A_AGENT_ADDRESS')
+        address = os.getenv('A2A_AGENT_URL')
 
         if not address:
-            raise ValueError("A2A_AGENT_ADDRESS is not set")
+            raise ValueError("A2A_AGENT_URL is not set")
 
         logging.info(f"Resolving agent card from {address}")
         card_resolver = A2ACardResolver(address, authorization_token=AUTH_TOKEN)
