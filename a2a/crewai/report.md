@@ -1,1 +1,5 @@
-[]
+I'll check the data model first to understand the revenue metrics available, then generate a report showing the last 12 months of revenue data. Now I'll create a query to show the revenue data for the last 12 months. I'll use the orders_view and group by month. I've generated a bar chart showing the monthly revenue data for the last 12 months. The chart displays revenue trends from January 2024 through December 2024, with each month's total revenue clearly visualized. 
+
+The data shows some interesting monthly variations, with December 2024 having the highest revenue at approximately $2.5 million, followed by November at about $1.98 million. February 2024 had the lowest revenue of the period at around $967,608.
+
+You can see the seasonal patterns in the visualization, which might help identify trends and inform business planning.
