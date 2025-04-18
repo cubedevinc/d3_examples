@@ -23,7 +23,8 @@ import json
 
 
 class A2AClient:
-    def __init__(self, agent_card: AgentCard = None, url: str = None):
+    def __init__(self, authorization_token: str, agent_card: AgentCard = None, url: str = None):
+        self.authorization_token = authorization_token
         if agent_card:
             self.url = agent_card.url
         elif url:
@@ -39,7 +40,7 @@ class A2AClient:
         self, payload: dict[str, Any]
     ) -> AsyncIterable[SendTaskStreamingResponse]:
         request = SendTaskStreamingRequest(params=payload)
-        with httpx.Client(timeout=None) as client:
+        with httpx.Client(timeout=None, headers={"Authorization": f"Bearer {self.authorization_token}"}) as client:
             with connect_sse(
                 client, "POST", self.url, json=request.model_dump()
             ) as event_source:
@@ -52,7 +53,7 @@ class A2AClient:
                     raise A2AClientHTTPError(400, str(e)) from e
 
     async def _send_request(self, request: JSONRPCRequest) -> dict[str, Any]:
-        async with httpx.AsyncClient() as client:
+        async with httpx.AsyncClient(headers={"Authorization": f"Bearer {self.authorization_token}"}) as client:
             try:
                 # Image generation could take time, adding timeout
                 response = await client.post(

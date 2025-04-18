@@ -18,8 +18,20 @@ from latest_ai_development.a2a.types import (
 from latest_ai_development.a2a.card_resolver import A2ACardResolver
 import uuid
 import asyncio
+import jwt
+import datetime
+import os
 
-AUTH_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhZ2VudElkIjoxMywidGVuYW50SWQiOjI4Nzc2LCJ0ZW5hbnRVcmwiOiJodHRwczovL2QzLWFpLWRlbW8uY3ViZWNsb3VkLmRldiIsImRlcGxveW1lbnRJZCI6MSwidXNlcklkIjoyLCJjb25zb2xlU2VydmVyVG9rZW4iOiJleUpoYkdjaU9pSklVekkxTmlJc0luUjVjQ0k2SWtwWFZDSjkuZXlKa1pYQnNiM2x0Wlc1MFNXUWlPakVzSW5SdmEyVnVUM2R1WlhJaU9pSmhhUzFsYm1kcGJtVmxjaUlzSW1saGRDSTZNVGMwTkRrek16QTJOaXdpWlhod0lqb3hOelEwT1RjMk1qWTJmUS43enBzZWoxSzNHcXdwcmlWUVdKX1RiWXZkYlVxbEVNR3FwaXVGc18wc3VjIiwiaWF0IjoxNzQ0OTMzMDY2LCJleHAiOjE3NDUwMTk0NjZ9.RTN1zB0QhYC9WG-BMb2_-K09aKXv6LpVhSxYf91pIYg"
+A2A_SECRET = os.getenv('A2A_SECRET') 
+
+payload = {
+    'context': {
+       'user': 'foo'
+     },
+    'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=1)  # Token expires in 1 hour
+}
+
+AUTH_TOKEN = jwt.encode(payload, A2A_SECRET, algorithm='HS256') 
 
 def convert_parts(parts: list[Part]):
   rval = []
@@ -54,11 +66,11 @@ def send_task(agent_name: str, message: str) -> str:
     # client = self.remote_agent_connections[agent_name]
     # if not client:
     #   raise ValueError(f"Client not available for {agent_name}")
-    address = "http://localhost:4201/api/a2a/d3-ai-demo/13"
+    address = "https://ai-engineer.cubecloud.dev/api/a2a/d3-ai-demo/13"
     card_resolver = A2ACardResolver(address, authorization_token=AUTH_TOKEN)
     card = card_resolver.get_agent_card()
-    client = RemoteAgentConnections(card)
-    return card
+    client = RemoteAgentConnections(card, AUTH_TOKEN)
+    #return card
 
     taskId = str(uuid.uuid4())
     sessionId = str(uuid.uuid4())
@@ -80,6 +92,8 @@ def send_task(agent_name: str, message: str) -> str:
     )
     task = asyncio.run(client.send_task(request))
     response = []
+    if task is None:
+        return response
     if task.status.message:
       # Assume the information is in the task message.
       response.extend(convert_parts(task.status.message.parts))

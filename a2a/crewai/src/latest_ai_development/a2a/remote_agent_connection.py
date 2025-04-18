@@ -17,8 +17,8 @@ TaskUpdateCallback = Callable[[TaskCallbackArg, AgentCard], Task]
 class RemoteAgentConnections:
   """A class to hold the connections to the remote agents."""
 
-  def __init__(self, agent_card: AgentCard):
-    self.agent_client = A2AClient(agent_card)
+  def __init__(self, agent_card: AgentCard, authorization_token: str):
+    self.agent_client = A2AClient(authorization_token, agent_card)
     self.card = agent_card
 
     self.conversation_name = None
