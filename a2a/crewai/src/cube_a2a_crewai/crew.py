@@ -1,9 +1,8 @@
 from crewai import Agent, Crew, Process, Task
 from crewai.project import CrewBase, agent, crew, task
-from crewai_tools import SerperDevTool
 from crewai.agents.agent_builder.base_agent import BaseAgent
 from typing import List
-from latest_ai_development.tools.custom_tool import send_task
+from cube_a2a_crewai.tools.custom_tool import send_task
 
 @CrewBase
 class LatestAiDevelopmentCrew():

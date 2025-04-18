@@ -1,8 +1,8 @@
 [project]
-name = "latest_ai_development"
+name = "cube_a2a_crewai"
 version = "0.1.0"
-description = "latest-ai-development using crewAI"
-authors = [{ name = "Your Name", email = "you@example.com" }]
+description = "Cube A2A for CrewAI"
+authors = [{ name = "Cube", email = "support@cube.dev" }]
 requires-python = ">=3.10,<3.13"
 dependencies = [
     "crewai[tools]>=0.114.0,<1.0.0",
@@ -10,11 +10,7 @@ dependencies = [
 ]
 
 [project.scripts]
-latest_ai_development = "latest_ai_development.main:run"
-run_crew = "latest_ai_development.main:run"
-train = "latest_ai_development.main:train"
-replay = "latest_ai_development.main:replay"
-test = "latest_ai_development.main:test"
+run_crew = "cube_a2a_crewai.main:run"
 
 [build-system]
 requires = ["hatchling"]
