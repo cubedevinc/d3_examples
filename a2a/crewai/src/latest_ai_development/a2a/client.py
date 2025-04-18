@@ -55,9 +55,8 @@ class A2AClient:
     async def _send_request(self, request: JSONRPCRequest) -> dict[str, Any]:
         async with httpx.AsyncClient(headers={"Authorization": f"Bearer {self.authorization_token}"}) as client:
             try:
-                # Image generation could take time, adding timeout
                 response = await client.post(
-                    self.url, json=request.model_dump(), timeout=30
+                    self.url, json=request.model_dump(), timeout=None
                 )
                 response.raise_for_status()
                 return response.json()
