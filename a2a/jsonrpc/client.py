@@ -159,7 +159,3 @@ async def main():
 # Synchronous wrapper function to be used as the console script entry point
 def run():
     asyncio.run(main())
-
-# Remove the old __main__ block as run() handles the execution now
-# if __name__ == "__main__":
-#     asyncio.run(main()) 
