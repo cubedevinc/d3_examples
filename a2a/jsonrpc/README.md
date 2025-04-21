@@ -7,7 +7,6 @@ It covers:
 *   Sending `tasks/sendSubscribe` requests (for streaming responses).
 *   Sending `tasks/get` requests to retrieve task results.
 *   Generating the required JWT `Authorization` header.
-*   Passing Cube-specific credentials via the `metadata.__cubeCredentials` field.
 
 ## Prerequisites
 
