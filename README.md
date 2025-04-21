@@ -16,3 +16,4 @@ Cube D3 is a powerful agent platform that can be integrated with other agent sys
 
 1. [A2A - JSON-RPC](a2a/jsonrpc/README.md)
 2. [A2A - CrewAI](a2a/crewai/README.md)
+3. [A2A - LangGraph](a2a/langgraph/README.md)
