@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+# Prevent setup.py generation if not needed, especially for workspaces
+py_modules = [] 
+
+[tool.uv.workspace]
+members = [
+    "common",       # The shared library
+    "examples/*"    # Include all examples
+]
+
+# Optional: Add shared project metadata here if desired
+[project]
+name = "a2a-workspace"
+version = "0.1.0"
+description = "Workspace for A2A common library and examples."
+# Add other metadata like authors, license, etc., if needed
