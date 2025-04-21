@@ -2,7 +2,7 @@
 name = "cube_a2a_crewai"
 version = "0.1.0"
 description = "Cube A2A for CrewAI"
-authors = [{ name = "Cube", email = "support@cube.dev" }]
+authors = [{ name = "Cube Dev Inc.", email = "support@cube.dev" }]
 requires-python = ">=3.10,<3.13"
 dependencies = [
     "crewai[tools]>=0.114.0,<1.0.0",
