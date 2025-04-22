@@ -2,7 +2,7 @@ from crewai import Agent, Crew, Process, Task
 from crewai.project import CrewBase, agent, crew, task
 from crewai.agents.agent_builder.base_agent import BaseAgent
 from typing import List
-from cube_a2a_crewai.tools.custom_tool import send_task
+from send_task_tool import send_task
 
 @CrewBase
 class LatestAiDevelopmentCrew():
@@ -14,7 +14,9 @@ class LatestAiDevelopmentCrew():
   @agent
   def data_analyst(self) -> Agent:
     return Agent(
-      config=self.agents_config['data_analyst'], # type: ignore[index]
+      role="Data Analyst",
+      goal="Analyze the data and provide a report.",
+      backstory="You are a data analyst with a passion for data.",
       verbose=True,
       tools=[send_task]
     )
@@ -22,7 +24,10 @@ class LatestAiDevelopmentCrew():
   @task
   def reporting_task(self) -> Task:
     return Task(
-      config=self.tasks_config['reporting_task'], # type: ignore[index]
+      description="Analyze the data and provide a report.",
+      expected_output="A report with the data analysis.",
+      agent=self.data_analyst(),
+      output_file="report.md"
     )
 
   @crew

@@ -1,7 +1,0 @@
-reporting_task:
-  description: >
-    Fetch data via send task tool
-  expected_output: >
-    A fully fledge report based on the featched data from task tool
-  agent: data_analyst
-  output_file: report.md
