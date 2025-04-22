@@ -2,8 +2,11 @@
 import warnings
 
 from datetime import datetime
+from dotenv import load_dotenv
 
-from cube_a2a_crewai.crew import LatestAiDevelopmentCrew
+from crew import LatestAiDevelopmentCrew
+
+load_dotenv()
 
 warnings.filterwarnings("ignore", category=SyntaxWarning, module="pysbd")
 
@@ -25,3 +28,6 @@ def run():
         LatestAiDevelopmentCrew().crew().kickoff(inputs=inputs)
     except Exception as e:
         raise Exception(f"An error occurred while running the crew: {e}")
+    
+if __name__ == "__main__":
+    run()

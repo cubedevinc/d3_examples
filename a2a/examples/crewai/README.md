@@ -1,60 +1,29 @@
-# Cube A2A for CrewAI
+# 🧩 CrewAI Example with Cube D3
 
-This repository contains a sample CrewAI project that illustrates how to call a **remote A2A agent** from a local CrewAI crew.  It showcases:
+This repository demonstrates how to set up and run a CrewAI example integrated with Cube D3.
 
-* A custom `SendTaskTool` that talks to a remote agent using the [A2A](https://github.com/google/A2A/) specification.
-* A minimal **CrewAI** setup (one agent & one task) defined in YAML.
-* A fully‑declarative `pyproject.toml` so you can install everything with **[uv](https://github.com/astral-sh/uv)** – a super‑fast Python package manager.
+## 📋 Prerequisites
 
----
+- Python 3.12+ installed on your system
+- Access to Cube D3 API
+- [UV](https://docs.astral.sh/uv/getting-started/installation/) installed on your system
 
-## 1. Prerequisites
+## 🚀 Getting Started
 
-| Requirement | Recommended version |
-|-------------|---------------------|
-| Python      | 3.10 – 3.12         |
-| uv          | 0.1.36 or newer     |
+### 🔑 Environment Setup
 
-Install `uv` (it is a single, static binary — no `sudo` required):
+Create a `.env` file with the following variables:
 
-```bash
-curl -Ls https://astral.sh/uv/install | bash
-# or use Homebrew
-brew install astral-sh/uv/uv
+```env
+D3_A2A_AGENT_URL=https://api.cube.dev
+D3_A2A_SECRET=your_secret
+OPENAI_API_KEY=https://api.cube.dev
 ```
 
----
+### 🚀 Running the Agent
 
-## 2. Clone & boot‑strap the project
-
-```bash
-# 1) Clone
-git clone https://github.com/cubedevinc/d3_examples.git
-cd d3_examples/a2a/crewai
-
-# 2) Create a virtual environment to isolate project dependencies.
-#    While `uv run` can operate in your current environment,
-#    creating a dedicated venv is best practice.
-python -m venv .venv
-source .venv/bin/activate
-
-# 3) Install all runtime dependencies using uv
-uv pip install -e .
-```
-
-`uv pip` is a **drop‑in replacement** for `pip`, but it is typically 10–100× faster because it uses a built‑in resolver and a shared package cache.
-
-> **Tip:** The `-e .` flag installs the project in *editable* (development) mode so that any changes you make to the source code are immediately reflected when you run it.
-
----
-
-## 3. Running the crew
-
-The entry‑point is exposed as the [**console‑script**] `run_crew` in `pyproject.toml`.
+Execute the following command in your terminal:
 
 ```bash
-OPENAI_API_KEY="<your‑openai‑key>" \
-A2A_SECRET="<your‑jwt‑secret>" \
-A2A_AGENT_URL="https://ai-engineer.cubecloud.dev/api/a2a/..." \
-uv run run_crew
+uv run .
 ```

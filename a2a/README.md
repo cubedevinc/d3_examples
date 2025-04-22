@@ -1,10 +1,7 @@
-1. Setup environment variables in `.env` file
-```
-D3_A2A_AGENT_URL=https://api.cube.dev
-D3_A2A_SECRET=your_secret
-OPENAI_API_KEY=https://api.cube.dev
-```
-2. Run the agent
-```
-uv run .
-```
+# 🧩 Cube D3 A2A Examples
+
+- `examples` folder contains examples of how to use the Cube D3 A2A protocol.
+  - [crewai](examples/crewai/README.md)
+  - [jsonrpc](examples/jsonrpc/README.md)
+  - [langgraph](examples/langgraph/README.md)
+- `common` folder contains common code for the examples.

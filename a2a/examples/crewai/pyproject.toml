@@ -1,20 +1,22 @@
 [project]
-name = "cube_a2a_crewai"
+name = "d3-examples-a2a-crewai"
 version = "0.1.0"
 description = "Cube A2A for CrewAI"
 authors = [{ name = "Cube Dev Inc.", email = "support@cube.dev" }]
-requires-python = ">=3.10,<3.13"
+requires-python = ">=3.12"
 dependencies = [
+    "d3-examples-a2a",
     "crewai[tools]>=0.114.0,<1.0.0",
     "pyjwt>=2.10.1",
+    "python-dotenv>=1.1.0",
 ]
-
-[project.scripts]
-run_crew = "cube_a2a_crewai.main:run"
 
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
-[tool.crewai]
-type = "crew"
+[tool.hatch.build.targets.wheel]
+packages = ["."] 
+
+[tool.uv.sources]
+d3-examples-a2a = { workspace = true }

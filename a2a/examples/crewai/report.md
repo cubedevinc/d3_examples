@@ -1,1 +1,0 @@
-Unable to create a report as the task to fetch revenue data for the last 12 months could not be executed.
