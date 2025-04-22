@@ -1,12 +1,13 @@
-import os
-import uuid
 import json
 import argparse
 import asyncio
 from typing import Any # Keep Any if needed elsewhere, or remove if not
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # Import common components
-from a2a_common import (
+from common import (
     BaseA2AClient,
     load_a2a_config,
     A2ACommunicationError,
@@ -104,9 +105,9 @@ async def get_task(client: BaseA2AClient, task_id: str):
 # --- Main Execution ---
 async def main():
     parser = argparse.ArgumentParser(description="Send JSON-RPC requests to an A2A agent using a2a_common.")
-    parser.add_argument("method", choices=["send", "subscribe", "get"], help="The RPC method to call.")
-    parser.add_argument("task_id", help="The ID for the task.")
-    parser.add_argument("-m", "--message", default="Hello from JSON-RPC client!", help="Message text for 'send' and 'subscribe' methods.")
+    parser.add_argument("-m", "--method", choices=["send", "subscribe", "get"], default="send", help="The RPC method to call.")
+    parser.add_argument("-t", "--task-id", default="test-task", help="The ID for the task.")
+    parser.add_argument("-s", "--message", default="Hello from JSON-RPC client!", help="Message text for 'send' and 'subscribe' methods.")
 
     args = parser.parse_args()
 
@@ -123,17 +124,4 @@ async def main():
 
 # Synchronous wrapper function to be used as the console script entry point
 def run():
-    # Add error handling for module resolution if a2a_common is not installed
-    try:
-        from a2a_common import BaseA2AClient # noqa: F401
-    except ModuleNotFoundError:
-        print("Error: The 'a2a_common' package was not found.")
-        # Updated path suggestion
-        print("Please install it from the 'a2a' directory, e.g., using: pip install -e ../../common")
-        exit(1)
-
     asyncio.run(main())
-
-# Ensure the script can be run directly
-if __name__ == "__main__":
-    run()

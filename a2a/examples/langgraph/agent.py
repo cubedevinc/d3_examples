@@ -9,6 +9,7 @@ from typing import TypedDict, Annotated, Sequence, Any # Added Any
 import operator
 import re
 from pydantic.types import SecretStr
+from dotenv import load_dotenv
 # from httpx_sse import connect_sse # No longer needed directly here
 
 # Langchain & Langgraph imports
@@ -17,13 +18,15 @@ from langchain_openai import ChatOpenAI
 from langchain_core.messages import BaseMessage, HumanMessage, AIMessage, SystemMessage
 
 # Import common components
-from a2a_common import (
+from common import (
     BaseA2AClient,
     load_a2a_config,
     A2ACommunicationError,
     A2AHttpError,
     A2AStreamError
 )
+
+load_dotenv()
 
 # --- Configuration ---
 # Load A2A config using the common function
@@ -259,28 +262,17 @@ app = workflow.compile()
 
 # --- Main Execution Logic ---
 def run():
-    # Add error handling for module resolution if a2a_common is not installed
-    try:
-        from a2a_common import BaseA2AClient # noqa: F401
-    except ModuleNotFoundError:
-        print("Error: The 'a2a_common' package was not found.")
-        # Updated path suggestion
-        print("Please install it from the 'a2a' directory, e.g., using: pip install -e ../../common")
-        exit(1)
-
-    parser = argparse.ArgumentParser(description="Run LangGraph A2A Agent Caller using a2a_common.")
-    parser.add_argument("query", help="The initial query/prompt for the agent.")
-    args = parser.parse_args()
+    query = "Number of customers."
 
     # Initial state includes the first user message
     initial_state = {
-        "messages": [HumanMessage(content=args.query)],
+        "messages": [HumanMessage(content=query)],
         "query_for_a2a": None,
         "a2a_result": None,
         "error": None
     }
 
-    print(f"\nInvoking graph with initial query: '{args.query}'")
+    print(f"\nInvoking graph with initial query: '{query}'")
     final_state_data = None
     try:
         # Stream events to see the flow
@@ -325,7 +317,3 @@ def run():
              #     print(f"  Last Message ({last_message.type.upper()}): {last_message.content}")
     else:
         print("Could not determine final state from stream.")
-
-# Ensure the script can be run directly
-if __name__ == "__main__":
-    run() 

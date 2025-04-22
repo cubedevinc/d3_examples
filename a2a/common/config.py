@@ -3,17 +3,17 @@ import datetime
 import jwt
 from typing import Optional
 
-A2A_AGENT_URL: Optional[str] = os.getenv("A2A_AGENT_URL")
-A2A_SECRET: Optional[str] = os.getenv("A2A_SECRET")
+D3_A2A_AGENT_URL: Optional[str] = os.getenv("D3_A2A_AGENT_URL")
+D3_A2A_SECRET: Optional[str] = os.getenv("D3_A2A_SECRET")
 
 def load_a2a_config() -> tuple[str, str]:
     """Loads A2A URL and Secret from environment variables, exiting if not found."""
-    agent_url = os.getenv("A2A_AGENT_URL")
-    secret = os.getenv("A2A_SECRET")
+    agent_url = os.getenv("D3_A2A_AGENT_URL")
+    secret = os.getenv("D3_A2A_SECRET")
 
     if not all([agent_url, secret]):
         print("Error: Required environment variables missing.")
-        print("Please set: A2A_AGENT_URL, A2A_SECRET")
+        print("Please set: D3_A2A_AGENT_URL, D3_A2A_SECRET")
         exit(1)
 
     # Assertions to help the type checker
