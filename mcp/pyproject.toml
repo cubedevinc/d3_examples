@@ -1,0 +1,32 @@
+[project]
+name = "d3-examples-mcp"
+version = "0.1.0"
+description = "MCP D3 client examples."
+requires-python = ">=3.12"
+dependencies = [
+    "mcp",
+    "openai",
+    "langgraph",
+    "langchain",
+    "langchain-openai",
+    "pyjwt",
+    "httpx",
+    "httpx-sse",
+    "anyio",
+]
+
+[project.scripts]
+mcp-langgraph-client = "mcp.examples.langgraph.main:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["common"]
+
+[tool.uv.workspace]
+members = [
+    "examples/langgraph",
+    "../python-sdk"
+] 

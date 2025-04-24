@@ -1,0 +1,8 @@
+[project]
+name = "mcp-langgraph-example"
+version = "0.1.0"
+description = "LangGraph client example using MCP SDK."
+requires-python = ">=3.12"
+
+# No build-system needed if it's just a script runner
+# Dependencies are handled by the workspace root 
