@@ -7,7 +7,7 @@ resolution-markers = [
 
 [manifest]
 members = [
-    "d3-examples-mcp",
+    "d3-mcp-client",
     "mcp-langgraph-example",
 ]
 
@@ -133,7 +133,7 @@ wheels = [
 ]
 
 [[package]]
-name = "d3-examples-mcp"
+name = "d3-mcp-client"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [
@@ -472,7 +472,7 @@ wheels = [
 [[package]]
 name = "mcp-langgraph-example"
 version = "0.1.0"
-source = { virtual = "examples/langgraph" }
+source = { virtual = "src/d3_mcp_client/examples/langgraph" }
 
 [[package]]
 name = "openai"

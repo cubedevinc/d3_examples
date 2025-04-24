@@ -22,11 +22,14 @@ def generate_jwt_token(secret: str, user_context: str = "mcp-langgraph-client") 
 def get_mcp_headers(secret: str | None, session_id: str | None = None) -> dict[str, str]:
     """Generates headers for MCP requests, including auth and session ID."""
     headers = {
-        "Accept": "text/event-stream" # Generally needed for SSE
+        "Accept": "application/json, text/event-stream",
+        "Content-Type": "application/json"
     }
     if secret:
         try:
             auth_token = generate_jwt_token(secret)
+            print(f"Secret: {secret}")
+            print(f"Auth token: {auth_token}")
             headers["Authorization"] = f"Bearer {auth_token}"
         except Exception as e:
             # Log or handle JWT generation error if needed, but don't stop header creation
