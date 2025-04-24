@@ -9,11 +9,15 @@ Cube D3 is a powerful agent platform that can be integrated with other agent sys
 ## Protocols
 
 1. A2A (Agent-to-Agent)
-2. MCP (Multi-Agent Communication Protocol) (Coming Soon)
+2. MCP (Model Context Protocol)
 
 
 ## Examples
 
+### A2A Examples
 1. [A2A - JSON-RPC](a2a/examples/jsonrpc)
 2. [A2A - CrewAI](a2a/examples/crewai)
 3. [A2A - LangGraph](a2a/examples/langgraph)
+
+### MCP Examples
+1. [MCP - FastMCP](mcp/examples/fastmcp) - Demonstrates integrating Cube D3 APIs with the Model Context Protocol using FastMCP
