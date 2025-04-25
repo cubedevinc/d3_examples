@@ -1,0 +1,22 @@
+{
+  "name": "mcp-js-example",
+  "version": "1.0.0",
+  "description": "JavaScript MCP Client Example using the @modelcontextprotocol/sdk",
+  "main": "langgraph-client.js",
+  "type": "module",
+  "scripts": {
+    "start": "node langgraph-client.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "file:../typescript-sdk",
+    "@langchain/langgraph": "^0.0.20",
+    "@langchain/openai": "^0.2.5",
+    "@langchain/core": "^0.2.18",
+    "jsonwebtoken": "^9.0.2",
+    "uuid": "^9.0.1",
+    "dotenv": "^16.4.5"
+  }
+}
