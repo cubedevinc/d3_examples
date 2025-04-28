@@ -124,35 +124,93 @@ const shouldContinue = (state) => {
 };
 
 
+const getSessionId = async (authToken) => {
+  // send initialize request to MCP agent
+  const reqId = uuidv4();
+  const response = await fetch(`${MCP_AGENT_URL}`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${authToken}`,
+      'Accept': 'application/json, text/event-stream',
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      "jsonrpc": "2.0",
+      "id": reqId,
+      "method": "initialize",
+      "params": {
+        "protocolVersion": "2025-03-26",
+        "clientInfo": {
+          "name": "langgraph-client",
+          "version": "0.1.0"
+        },
+        "capabilities": {}
+      }
+    })
+  });
+
+  // Parse response which might be JSON or SSE format
+  let data;
+  try {
+    // First try to parse as regular JSON
+    const responseText = await response.text();
+    
+    // Check if it's SSE format
+    if (responseText.includes("event: message\ndata:") || responseText.startsWith("data:")) {
+      // Extract the JSON data from SSE format
+      const match = responseText.match(/data: ({.*})/);
+      if (match && match[1]) {
+        data = JSON.parse(match[1]);
+        console.log("[getSessionId] Successfully parsed SSE format response");
+      } else {
+        throw new Error("Could not extract JSON from SSE format");
+      }
+    } else {
+      throw new Error("Expected SSE format response, got: " + responseText);
+    }
+    
+    console.log(`[getSessionId] Parsed data: ${JSON.stringify(data)}`);
+  } catch (error) {
+    console.error(`[getSessionId] Error parsing response: ${error.message}`);
+    throw new Error(`Failed to parse server response: ${error.message}`);
+  }
+  
+  // Get session ID from headers (preferred method)
+  const sessionId = response.headers.get("mcp-session-id");
+  if (sessionId) {
+    return sessionId;
+  }
+  
+  throw new Error("Session ID not found in response");
+}
+
 // --- Main Execution --- 
 async function runGraph(userInput, authToken) {
     // Initialize the LLM and Tool
     const llm = new ChatOpenAI({ apiKey: OPENAI_API_KEY, modelName: "gpt-4o" });
+    const clientSessionId = await getSessionId(authToken);
+    const transport = new StreamableHTTPClientTransport(
+      new URL(MCP_AGENT_URL),
+      {
+        sessionId: clientSessionId
+      }
+    );
+    transport.onerror = (e) => console.error('Transport Error:', e);
+
+    const client = new MCPClient({ name: 'mcp-js-tool-caller', version: '0.1.0' });
+    client.onerror = (e) => console.error('Client Error:', e);
+
+    await client.connect(transport);
+    console.log(`[Tool] Connected. Server Session ID: ${transport.sessionId}`);
 
     // Define the MCP tool using the 'tool' function
     const mcpTool = tool(
       async (input) => { // The core logic from the previous _call method
         console.log(`--- [Tool] Calling invokeCubeAgent with query: "${input.user_query}" ---`);
-        let client = null;
-        let transport = null;
-        const clientSessionId = `mcp-js-tool-${uuidv4()}`;
 
         try {
-          transport = new StreamableHTTPClientTransport(
-            new URL(MCP_AGENT_URL),
-            {
-              headers: { 'Authorization': `Bearer ${authToken}` }, // Use authToken from outer scope
-              sessionId: clientSessionId
-            }
-          );
-          transport.onerror = (e) => console.error('Transport Error:', e);
 
-          client = new MCPClient({ name: 'mcp-js-tool-caller', version: '0.1.0' });
-          client.onerror = (e) => console.error('Client Error:', e);
-
-          await client.connect(transport);
-          console.log(`[Tool] Connected. Server Session ID: ${transport.sessionId}`);
-
+          console.log(`[Tool] Calling client.callTool with name: "invokeCubeAgent" and arguments: ${JSON.stringify(input)}`);
           const result = await client.callTool({ name: "invokeCubeAgent", arguments: { input: input.user_query } });
           console.log('[Tool] MCP call successful.');
 
