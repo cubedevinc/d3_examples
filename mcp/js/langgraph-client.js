@@ -1,6 +1,7 @@
 // langgraph-client.js
 import { Client as MCPClient } from '@modelcontextprotocol/sdk/client/index.js';
 import {StreamableHTTPClientTransport} from '@modelcontextprotocol/sdk/client/streamableHttp.js';
+import { LoggingMessageNotificationSchema } from '@modelcontextprotocol/sdk/types.js';
 import dotenv from 'dotenv';
 import jwt from 'jsonwebtoken';
 import { v4 as uuidv4 } from 'uuid';
@@ -18,6 +19,8 @@ import {
 } from '@langchain/core/messages';
 import { tool } from "@langchain/core/tools"; // Import the tool function
 import { z } from "zod"; // For tool schema definition
+// Define a simple structure/schema identifier for logging notifications
+// const LoggingMessageNotificationSchema = { method: "logging/message" };
 
 // Load environment variables
 dotenv.config();
@@ -188,19 +191,38 @@ const getSessionId = async (authToken) => {
 async function runGraph(userInput, authToken) {
     // Initialize the LLM and Tool
     const llm = new ChatOpenAI({ apiKey: OPENAI_API_KEY, modelName: "gpt-4o" });
-    const clientSessionId = await getSessionId(authToken);
+    // const clientSessionId = await getSessionId(authToken);
     const transport = new StreamableHTTPClientTransport(
       new URL(MCP_AGENT_URL),
       {
-        sessionId: clientSessionId
+        // sessionId: clientSessionId,
+        requestInit: {
+          headers: {
+            'Authorization': `Bearer ${authToken}`,
+          },
+        },
       }
     );
     transport.onerror = (e) => console.error('Transport Error:', e);
 
-    const client = new MCPClient({ name: 'mcp-js-tool-caller', version: '0.1.0' });
+    const client = new MCPClient({ 
+      name: 'mcp-js-tool-caller',
+      version: '0.1.0', 
+    });
     client.onerror = (e) => console.error('Client Error:', e);
 
-    await client.connect(transport);
+    // --- Add Notification Handler ---
+    client.setNotificationHandler(LoggingMessageNotificationSchema, (notification) => {
+      console.log('--------------------------------');
+      console.log(notification);
+      console.log(`[Notification] ${notification?.params?.level || 'INFO'}: ${notification?.params?.data || 'No data'}`);
+      console.log('--------------------------------');
+    });
+    // -------------------------------
+
+    await client.connect(transport, {
+      resetTimeoutOnProgress: true
+    });
     console.log(`[Tool] Connected. Server Session ID: ${transport.sessionId}`);
 
     // Define the MCP tool using the 'tool' function
@@ -211,7 +233,7 @@ async function runGraph(userInput, authToken) {
         try {
 
           console.log(`[Tool] Calling client.callTool with name: "invokeCubeAgent" and arguments: ${JSON.stringify(input)}`);
-          const result = await client.callTool({ name: "invokeCubeAgent", arguments: { input: input.user_query } });
+          const result = await client.callTool({ name: "invokeCubeAgent", arguments: { input: input.user_query, interval: 1000, count: 5 } });
           console.log('[Tool] MCP call successful.');
 
           let responseText = "";
