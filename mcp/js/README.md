@@ -1,78 +1,87 @@
-# JavaScript MCP Client Example with LangGraph
+# D3 <-> LangGraph MCP Client Example
 
-This example demonstrates a JavaScript client using LangGraph to orchestrate interactions with an LLM (OpenAI) and a remote tool provided by an MCP server. The client uses the local `@modelcontextprotocol/sdk` built from the adjacent SDK directory.
+This directory contains a JavaScript example demonstrating how to use LangGraph to build an agent that interacts with both a standard LLM (OpenAI) and a custom tool provided by a **remote MCP server**.
+
+## Overview
+
+The `main.js` script sets up a LangGraph workflow that connects to a remote MCP server to utilize its tools:
+
+1.  A user query is sent to an OpenAI model (`gpt-4o`).
+2.  If the model decides to use the configured MCP tool (`invokeCubeAgent`), the script connects to the remote MCP server specified in the environment variables using `@modelcontextprotocol/sdk`.
+3.  The script authenticates with the remote server using a JWT generated from a shared secret.
+4.  It calls the `invokeCubeAgent` tool hosted on the remote server.
+5.  It handles potential notifications and progress updates from the remote server.
+6.  The tool's result is formatted and sent back to the OpenAI model.
+7.  The model generates the final response.
+8.  The script takes user input either from a command-line argument or via an interactive prompt.
+
+## Features
+
+*   **LangGraph Workflow:** Uses `StateGraph` to orchestrate LLM and remote tool calls.
+*   **Remote MCP Tool Integration:** Connects to and calls tools on a separate MCP server.
+*   **JWT Authentication:** Securely connects to the remote MCP server.
+*   **Interactive Input:** Prompts the user for input if needed.
+*   **Error Handling:** Basic client-side error handling.
+*   **Notifications & Progress:** Handles asynchronous updates from the remote server.
 
 ## Prerequisites
 
-1.  **Node.js and Yarn/npm:** Install Node.js (which includes npm). Yarn is used in the examples, but npm works too.
+*   Node.js (v18 or later recommended)
+*   Yarn or npm
+*   Access to a running MCP server that exposes an `invokeCubeAgent` tool and is configured for JWT (HS256) authentication.
 
-## Setup
+## Client Setup
 
-1.  **Build the Local MCP SDK:**
-    *   Navigate to the adjacent local MCP SDK directory: `cd ../<sdk_directory_name>` (relative to this `mcp/js` directory).
-    *   Install its dependencies: `yarn install` (or `npm install`).
-    *   Build the SDK: `yarn build` (or `npm run build`).
-    *   Navigate back: `cd ../js`.
-
-2.  **Install Client Dependencies:** Install the dependencies for this example (including LangChain, LangGraph, OpenAI, and the *linked* local MCP SDK):
+1.  **Install Dependencies:** Navigate to this directory (`mcp/js`) in your terminal and run:
     ```bash
-    yarn install 
+    yarn install
     # or
-    # npm install
+    npm install
     ```
-    *(Note: The `package.json` is configured to use `"@modelcontextprotocol/sdk": "file:../<sdk_directory_name>"`).*
 
-3.  **Configure Environment Variables:** Create a `.env` file in this directory (`mcp/js/.env`) and add the following variables:
+2.  **Configure Environment Variables:** Create a file named `.env` in this directory (`mcp/js/.env`). Add the following, ensuring the values match your **remote MCP server's configuration**:
 
     ```dotenv
-    # URL of the Python MCP Agent server 
-    # (e.g., from d3-mcp-client/python-sdk/examples/servers/simple-tool)
-    MCP_AGENT_URL=http://localhost:8000/mcp 
+    # The full URL of your target REMOTE MCP server's endpoint
+    D3_MCP_AGENT_URL=http://your-remote-mcp-server.com/mcp
 
-    # Secret key used by the Python MCP server to VALIDATE incoming JWTs
-    MCP_AGENT_SECRET=your_secret_key_here 
+    # The shared secret key (HS256) used by the REMOTE server for JWT authentication.
+    # This client uses the same secret to generate the token.
+    D3_MCP_AGENT_SECRET=the_secret_configured_on_your_remote_server
 
-    # OpenAI API Key for the LangGraph agent
-    OPENAI_API_KEY=your_openai_api_key_here
+    # Your OpenAI API key for the LangGraph agent
+    OPENAI_API_KEY=sk-your_openai_api_key
     ```
-    *   Ensure `MCP_AGENT_URL` points to your running Python MCP server.
-    *   `MCP_AGENT_SECRET` is the secret the *server* uses for JWT validation (HS256). The client uses this same secret to *generate* the JWT.
-    *   Provide your `OPENAI_API_KEY`.
+    *   **Crucially:** `D3_MCP_AGENT_URL` must point to the correct endpoint of your running remote server, and `D3_MCP_AGENT_SECRET` must exactly match the secret the remote server expects.
 
-## Running the Example
+## Running the Client
 
-1.  **Start the Python MCP Server:** 
-    *   Ensure the Python server you want to connect to is running. For example, navigate to `d3-mcp-client/python-sdk/examples/servers/simple-tool`.
-    *   Make sure its `.env` file contains the *same* `MCP_AGENT_SECRET` that you put in the JavaScript client's `.env` file.
-    *   Start the server (e.g., `python main.py`).
+1.  **Ensure Remote MCP Server is Running:** Verify that the remote MCP server (configured in your `.env`) is operational and accessible from where you run this client.
 
-2.  **Run the LangGraph Client:** Execute the client script from the `mcp/js` directory:
-    ```bash
-    yarn start "Optional: Your query for the agent here"
-    # or
-    # node langgraph-client.js "Optional: Your query for the agent here"
-    ```
-    *   If you don't provide a query, it uses a default: "Summarize user signups from the last 7 days.".
+2.  **Run the Client Script:** From this directory (`mcp/js`), execute the script:
 
-## How it Works
+    *   **With a command-line query:**
+        ```bash
+        node main.js "Your query here"
+        ```
 
-*   **`langgraph-client.js`:** Contains the main logic.
-*   **Local SDK:** Uses the `@modelcontextprotocol/sdk` linked via a relative file path in `package.json`, requiring the local SDK to be built first.
-*   **Authentication:** Generates a JWT using `jsonwebtoken` and the `MCP_AGENT_SECRET` from the `.env` file. This token is sent in the `Authorization: Bearer <token>` header.
-*   **MCP Tool Definition:** Uses the `tool()` function from `@langchain/core/tools` to define the `invokeCubeAgent` tool. The tool's execution logic encapsulates:
-    *   Creating an MCP `StreamableHTTPClientTransport` and `MCPClient` from the local SDK.
-    *   Connecting to the `MCP_AGENT_URL` with the generated `authToken`.
-    *   Calling the *remote* MCP tool (`invokeCubeAgent`) with the user's query.
-    *   Processing the response (text content or error).
-    *   Disconnecting the MCP client.
-*   **LangGraph Structure:**
-    *   An "Agent State" (implicitly defined) holds `messages`, `llmWithTools`, and `tools`.
-    *   `llmWithTools`: An `ChatOpenAI` model instance bound to the `mcpTool`.
-    *   `callModel` Node: Retrieves `llmWithTools` from the state and invokes the LLM with the current message history.
-    *   `callToolNode` Node: 
-        *   Retrieves the `tools` array (containing `mcpTool`) from the state.
-        *   Manually iterates through tool calls requested by the LLM.
-        *   Invokes the corresponding tool (our `mcpTool`).
-        *   Constructs `ToolMessage` objects with the results and correct `tool_call_id`.
-    *   `shouldContinue` Edge Logic: Determines flow based on whether the last AI message contained tool calls.
-    *   The graph orchestrates the flow, passing the necessary components (`llmWithTools`, `tools`) via state channels between nodes. 
+    *   **Interactively:**
+        ```bash
+        node main.js 
+        ```
+        (The script will prompt: `Please enter your query:`) 
+
+## How It Works
+
+*   **`main.js`:** Contains the client-side agent logic.
+*   **SDK:** Uses the standard `@modelcontextprotocol/sdk` package.
+*   **Authentication:** Generates a JWT using `jsonwebtoken` and the `D3_MCP_AGENT_SECRET`. This token is sent to the remote server via the `StreamableHTTPClientTransport`.
+*   **MCP Tool Definition:** Defines a *local* LangChain tool (`mcpTool`) that acts as a wrapper. When invoked by LangGraph, this wrapper:
+    *   Creates an MCP `StreamableHTTPClientTransport` and `MCPClient`.
+    *   Connects to the remote `D3_MCP_AGENT_URL` using the generated `authToken`.
+    *   Calls the *remote* MCP tool (`invokeCubeAgent`) using `client.callTool`.
+    *   Processes the response received from the remote server.
+*   **Error/Notification Handling:** Includes handlers for client/transport errors and asynchronous messages (`logging/message`, progress updates) sent *from* the remote server.
+*   **Cleanup:** Relies on the Node.js process exit for cleanup, avoiding explicit `client.close()` which caused issues.
+*   **LangGraph Structure:** Orchestrates the calls between the LLM and the local `mcpTool` wrapper.
+*   **Input Handling:** Uses `readline` to get interactive input if no command-line argument is provided.
