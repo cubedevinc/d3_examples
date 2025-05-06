@@ -131,8 +131,49 @@ async function runGraph(userInput, authToken) {
 
   // Add Notification Handler
   client.setNotificationHandler(LoggingMessageNotificationSchema, (notification) => {
-    // TODO: Handle notifications
-    console.log(`Level: ${notification?.params?.level || 'INFO'}, Data: ${notification?.params?.data || 'No data'}`);
+    const level = notification?.params?.level || 'INFO';
+    const data = notification?.params?.data;
+
+    let output = `MCP Notification - Level: ${level}`;
+
+    if (data && typeof data === 'object') {
+      if ('state' in data) { // Primarily TaskStatus objects
+        output += `, State: ${data.state}`;
+        if (data.message && typeof data.message === 'object' && 'role' in data.message) {
+          output += `, Role: ${data.message.role}`;
+        }
+        if (typeof data.description === 'string' && data.description) {
+          output += `, Event: ${data.description}`;
+        }
+        // For 'working' state, if there's a text part in the message, show a snippet
+        if (data.state === 'working') {
+          const textParts = data.message.parts.filter(part => part.type === 'text');
+
+          if (textParts.length > 0) {
+            const metadata = textParts[0].metadata;
+            const text = textParts[0].text;
+            output += `, Text: "${text}"`;
+
+            if (Object.keys(metadata).length > 0) {
+              output += `, Metadata: ${JSON.stringify(metadata)}`;
+            }
+          }
+        }
+      } else if ('name' in data) { // Primarily Artifact objects (e.g., from tool end)
+        output += `, Artifact Name: ${data.name}`;
+        if (typeof data.description === 'string' && data.description) {
+          output += `, Event: ${data.description}`;
+        }
+        if (Array.isArray(data.parts) && data.parts.some(part => part.type === 'data')) {
+          output += `, ContainsData: true`;
+        }
+      } else { // Other generic objects - very simple summary
+        const keys = Object.keys(data);
+        output += `, Data: [Object (${keys.length} key${keys.length === 1 ? '' : 's'})]`;
+      }
+    }
+
+    console.log(output);
   });
 
   // Connect Client
