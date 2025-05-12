@@ -1,0 +1,22 @@
+{
+  "name": "d3-mcp-js-example",
+  "version": "1.0.0",
+  "description": "JavaScript MCP Client Example using the @modelcontextprotocol/sdk",
+  "main": "main.js",
+  "type": "module",
+  "scripts": {
+    "start": "node main.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@langchain/core": "^0.2.18",
+    "@langchain/langgraph": "^0.0.20",
+    "@langchain/openai": "^0.2.5",
+    "@modelcontextprotocol/sdk": "^1.10.2",
+    "dotenv": "^16.4.5",
+    "jsonwebtoken": "^9.0.2",
+    "uuid": "^9.0.1"
+  }
+}
