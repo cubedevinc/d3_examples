@@ -20,4 +20,5 @@ Cube D3 is a powerful agent platform that can be integrated with other agent sys
 3. [A2A - LangGraph](a2a/examples/langgraph)
 
 ### MCP
-1. [MCP - LangGraph](mcp/js/README.md)
+1. [MCP - Claude Desktop](mcp/js/claude-desktop/README.md)
+2. [MCP - LangGraph](mcp/js/langgraph/README.md)
