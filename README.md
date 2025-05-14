@@ -9,7 +9,7 @@ Cube D3 is a powerful agent platform that can be integrated with other agent sys
 ## Protocols
 
 1. A2A (Agent-to-Agent)
-2. MCP (Multi-Agent Communication Protocol) (Coming Soon)
+2. MCP (Model Context Protocol)
 
 
 ## Examples
