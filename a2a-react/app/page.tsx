@@ -4,11 +4,7 @@ import { Chat as D3ChatDisplay } from '@/components/chat'
 import { ChatInput as D3ChatInput } from '@/components/chat-input'
 import { NavBar } from '@/components/navbar'
 import { Message as D3Message } from '@/lib/messages'
-import { supabase } from '@/lib/supabase'
-import { useAuth } from '@/lib/auth'
-import { ViewType } from '@/components/auth'
-import { AuthDialog } from '@/components/auth-dialog'
-import { SetStateAction, useEffect, useState, useCallback } from 'react'
+import { SetStateAction, useEffect, useState } from 'react'
 import { usePostHog } from 'posthog-js/react'
 
 interface A2AMessage {
@@ -25,9 +21,6 @@ export default function Home() {
   const [errorMessage, setErrorMessage] = useState('')
   
   const posthog = usePostHog()
-  const [isAuthDialogOpen, setAuthDialog] = useState(false)
-  const [authView, setAuthView] = useState<ViewType>('sign_in')
-  const { session } = useAuth(setAuthDialog, setAuthView)
 
   useEffect(() => {
     const chatContainer = document.getElementById('chat-container')
@@ -119,22 +112,6 @@ export default function Home() {
     setFiles(change)
   }
 
-  function logout() {
-    supabase ? supabase.auth.signOut() : console.warn('Supabase is not initialized')
-    posthog.capture('user_logout')
-  }
-  
-  function handleSocialClick(target: 'github' | 'x' | 'discord') {
-    if (target === 'github') {
-      window.open('https://github.com/e2b-dev/fragments', '_blank')
-    } else if (target === 'x') {
-      window.open('https://x.com/e2b_dev', '_blank')
-    } else if (target === 'discord') {
-      window.open('https://discord.gg/U7KEcGErtQ', '_blank')
-    }
-    posthog.capture(`${target}_social_click`)
-  }
-
   function handleClearChat() {
     setMessages([])
     setChatInput('')
@@ -146,25 +123,8 @@ export default function Home() {
 
   return (
     <main className="flex min-h-screen max-h-screen">
-      {supabase && (
-        <AuthDialog
-          open={isAuthDialogOpen}
-          setOpen={setAuthDialog}
-          view={authView}
-          supabase={supabase}
-        />
-      )}
       <div className="flex flex-col w-full max-h-full max-w-[800px] mx-auto px-4 overflow-auto">
-          <NavBar
-            session={session}
-            showLogin={() => setAuthDialog(true)}
-            signOut={logout}
-            onSocialClick={handleSocialClick}
-            onClear={handleClearChat}
-            canClear={messages.length > 0}
-            onUndo={() => {}}
-            canUndo={false}
-          />
+          <NavBar onClear={handleClearChat} canClear={messages.length > 0} />
           <D3ChatDisplay
             messages={displayMessages}
             isLoading={isLoading}

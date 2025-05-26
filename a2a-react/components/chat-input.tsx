@@ -1,6 +1,5 @@
 'use client'
 
-import { RepoBanner } from './repo-banner'
 import { Button } from '@/components/ui/button'
 import {
   Tooltip,
@@ -173,7 +172,6 @@ export function ChatInput({
         </div>
       )}
       <div className="relative">
-        <RepoBanner className="absolute bottom-full inset-x-2 translate-y-1 z-0 pb-2" />
         <div
           className={`shadow-md rounded-2xl relative z-10 bg-background border ${
             dragActive
@@ -188,7 +186,7 @@ export function ChatInput({
             maxRows={5}
             className="text-normal px-3 resize-none ring-0 bg-inherit w-full m-0 outline-none"
             required={true}
-            placeholder="Describe your app..."
+            placeholder="Enter your query here..."
             disabled={isErrored}
             value={input}
             onChange={handleInputChange}
@@ -204,29 +202,6 @@ export function ChatInput({
               className="hidden"
               onChange={handleFileInput}
             />
-            <div className="flex items-center flex-1 gap-2">
-              <TooltipProvider>
-                <Tooltip delayDuration={0}>
-                  <TooltipTrigger asChild>
-                    <Button
-                      disabled={!isMultiModal || isErrored}
-                      type="button"
-                      variant="outline"
-                      size="icon"
-                      className="rounded-xl h-10 w-10"
-                      onClick={(e) => {
-                        e.preventDefault()
-                        document.getElementById('multimodal')?.click()
-                      }}
-                    >
-                      <Paperclip className="h-5 w-5" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>Add attachments</TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-              {files.length > 0 && filePreview}
-            </div>
             <div>
               {!isLoading ? (
                 <TooltipProvider>
@@ -269,12 +244,6 @@ export function ChatInput({
           </div>
         </div>
       </div>
-      <p className="text-xs text-muted-foreground mt-2 text-center">
-        Fragments is an open-source project made by{' '}
-        <a href="https://e2b.dev" target="_blank" className="text-[#ff8800]">
-          ✶ E2B
-        </a>
-      </p>
     </form>
   )
 }
