@@ -1,3 +1,5 @@
+'use client'
+
 import Logo from './logo'
 import { Button } from '@/components/ui/button'
 import { ThemeToggle } from '@/components/ui/theme-toggle'
@@ -7,25 +9,64 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
-import { Trash } from 'lucide-react'
+import { Trash, Zap, Plus } from 'lucide-react'
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 
 export function NavBar({
   onClear,
   canClear,
+  onNewChat,
 }: {
   onClear: () => void
   canClear: boolean
+  onNewChat?: () => void
 }) {
+  const pathname = usePathname()
+  
   return (
     <nav className="w-full flex bg-background py-4">
       <div className="flex flex-1 items-center">
         <Link href="/" className="flex items-center gap-2" target="_blank">
           <Logo width={24} height={24} />
-          <h1 className="whitespace-pre">Cube D3 Demo App (A2A)</h1>
+          <h1 className="whitespace-pre">Cube D3 Demo App</h1>
         </Link>
       </div>
       <div className="flex items-center gap-1 md:gap-4">
+        {onNewChat && pathname === '/stream-chat' && (
+          <TooltipProvider>
+            <Tooltip delayDuration={0}>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={onNewChat}
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  New Chat
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Create new chat thread</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        )}
+        <TooltipProvider>
+          <Tooltip delayDuration={0}>
+            <TooltipTrigger asChild>
+              <Button
+                variant={pathname === '/stream-chat' ? 'default' : 'ghost'}
+                size="sm"
+                asChild
+              >
+                <Link href="/stream-chat">
+                  <Zap className="h-4 w-4 mr-2" />
+                  Stream Chat
+                </Link>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Switch to Stream Chat</TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
         <TooltipProvider>
           <Tooltip delayDuration={0}>
             <TooltipTrigger asChild>

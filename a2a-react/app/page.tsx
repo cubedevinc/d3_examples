@@ -124,7 +124,7 @@ export default function Home() {
   return (
     <main className="flex min-h-screen max-h-screen">
       <div className="flex flex-col w-full max-h-full max-w-[800px] mx-auto px-4 overflow-auto">
-          <NavBar onClear={handleClearChat} canClear={messages.length > 0} />
+          <NavBar onClear={handleClearChat} canClear={messages.length > 0} onNewChat={undefined} />
           <D3ChatDisplay
             messages={displayMessages}
             isLoading={isLoading}

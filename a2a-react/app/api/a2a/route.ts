@@ -9,6 +9,9 @@ export async function POST(request: NextRequest) {
   const secret = process.env.D3_A2A_SECRET
   const agentUrl = process.env.NEXT_PUBLIC_D3_A2A_AGENT_URL
 
+  console.log('secret', secret)
+  console.log('agentUrl', agentUrl)
+
   if (!secret || !agentUrl) {
     return NextResponse.json(
       {
