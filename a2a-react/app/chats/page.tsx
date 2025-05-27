@@ -1,5 +1,5 @@
 import { ChatPage } from '@/components/chat-page'
 
-export default function Home() {
+export default function ChatsPage() {
   return <ChatPage isNewChat={true} />
-}
+} 

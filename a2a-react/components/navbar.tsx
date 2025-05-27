@@ -9,7 +9,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
-import { Trash, Zap, Plus } from 'lucide-react'
+import { Trash, Plus } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 
@@ -33,7 +33,7 @@ export function NavBar({
         </Link>
       </div>
       <div className="flex items-center gap-1 md:gap-4">
-        {onNewChat && pathname === '/stream-chat' && (
+        {onNewChat && pathname.startsWith('/chats') && (
           <TooltipProvider>
             <Tooltip delayDuration={0}>
               <TooltipTrigger asChild>
@@ -50,23 +50,6 @@ export function NavBar({
             </Tooltip>
           </TooltipProvider>
         )}
-        <TooltipProvider>
-          <Tooltip delayDuration={0}>
-            <TooltipTrigger asChild>
-              <Button
-                variant={pathname === '/stream-chat' ? 'default' : 'ghost'}
-                size="sm"
-                asChild
-              >
-                <Link href="/stream-chat">
-                  <Zap className="h-4 w-4 mr-2" />
-                  Stream Chat
-                </Link>
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>Switch to Stream Chat</TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
         <TooltipProvider>
           <Tooltip delayDuration={0}>
             <TooltipTrigger asChild>

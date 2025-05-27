@@ -1,4 +1,4 @@
-import { Message, ToolCall } from '@/lib/messages'
+import { Message, ToolCall } from '@/types/messages'
 import { FragmentSchema } from '@/lib/schema'
 import { ExecutionResult } from '@/lib/types'
 import { DeepPartial } from 'ai'
