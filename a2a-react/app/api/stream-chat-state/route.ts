@@ -26,7 +26,6 @@ export async function POST(request: NextRequest) {
   const requestBody: any = {
     chatId: String(chatId),
     cubeCredentials: {
-      __typename: 'AIEngineerCubeCredentialsDTO',
       apiToken: apiToken,
       apiUrl: apiUrl,
     },
