@@ -1,34 +1,35 @@
+import jwt from 'jsonwebtoken'
 import { NextRequest, NextResponse } from 'next/server'
-import { v4 as uuidv4 } from 'uuid'
 
 export const runtime = 'nodejs'
 
 export async function POST(request: NextRequest) {
   const { input, chatId, messageId, loadOnly } = await request.json()
 
-  const authToken = process.env.D3_STREAM_CHAT_AUTH_TOKEN
-  const streamChatUrl =
-    process.env.NEXT_PUBLIC_D3_STREAM_CHAT_URL ||
-    'http://localhost:4201/api/chat/stream-chat-state'
+  const agentUrl = process.env.D3_API_AGENT_URL
+  const secret = process.env.D3_API_SECRET
 
-  const apiToken = process.env.D3_STREAM_CHAT_API_TOKEN
-  const apiUrl = process.env.D3_STREAM_CHAT_API_URL
-
-  if (!authToken) {
+  if (!agentUrl || !secret) {
     return NextResponse.json(
       {
-        error: 'Missing D3_STREAM_CHAT_AUTH_TOKEN environment variable.',
+        error:
+          'Missing D3_API_AGENT_URL or D3_API_SECRET environment variable.',
       },
       { status: 500 },
     )
   }
 
+  // Generate JWT for A2A authentication
+  const authToken = jwt.sign(
+    {
+      context: { user: 'a2a-common-client' },
+      exp: Math.floor(Date.now() / 1000) + 60 * 60,
+    },
+    secret,
+  )
+
   const requestBody: any = {
     chatId: String(chatId),
-    cubeCredentials: {
-      apiToken: apiToken,
-      apiUrl: apiUrl,
-    },
     activeBranchName: 'main',
     isDevMode: false,
     isDefaultBranch: true,
@@ -45,7 +46,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const response = await fetch(streamChatUrl, {
+    const response = await fetch(agentUrl, {
       method: 'POST',
       headers: headers,
       body: JSON.stringify(requestBody),

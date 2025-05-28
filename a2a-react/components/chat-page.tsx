@@ -4,9 +4,10 @@ import { Chat as D3ChatDisplay } from '@/components/chat'
 import { ChatInput as D3ChatInput } from '@/components/chat-input'
 import { NavBar } from '@/components/navbar'
 import { Message, streamChatMessageToMessage, StreamChatMessage } from '@/types/messages'
-import { SetStateAction, useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { usePostHog } from 'posthog-js/react'
 import { useRouter } from 'next/navigation'
+import { v4 as uuidv4 } from 'uuid'
 
 interface ChatPageProps {
   chatId?: string
@@ -29,14 +30,45 @@ export function ChatPage({ chatId, isNewChat = false }: ChatPageProps) {
       setIsLoadingExistingChat(true)
       setErrorMessage('')
       
-      // First, get the chat thread details
-      const threadResponse = await fetch(`/api/get-chat-thread/${existingChatId}`)
-      if (!threadResponse.ok) {
-        throw new Error(`Failed to get chat thread: ${threadResponse.status}`)
+      // Check for initial message in localStorage
+      const storedInitial = localStorage.getItem(`initialMessage:${existingChatId}`)
+      if (storedInitial) {
+        localStorage.removeItem(`initialMessage:${existingChatId}`)
+        // Add initial user message to UI
+        const messageId = `${Date.now()}-message`
+        const initialUserMessage: Message = {
+          role: 'user',
+          content: [{ type: 'text', text: storedInitial }],
+          id: messageId,
+          sort: 0,
+        }
+        setMessages([initialUserMessage])
+
+        // Stream the initial message response
+        const response = await fetch('/api/stream-chat-state', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            input: storedInitial,
+            chatId: existingChatId,
+            messageId: messageId,
+          }),
+        })
+        if (!response.ok) {
+          throw new Error(`Stream error: ${response.status}`)
+        }
+        const reader = response.body?.getReader()
+        if (!reader) {
+          throw new Error('No response body reader available')
+        }
+        await iterateStream(reader, (msg) => {
+          if (msg.id === '__state__') return
+          upsertMessageFromStream(msg)
+        })
+        posthog.capture('chat_loaded', { chat_id: existingChatId })
+        return
       }
       
-      const threadData = await threadResponse.json()
-      console.log('Chat thread data:', threadData)
       
       // Check if this is a new chat that needs initialization
       const response = await fetch('/api/stream-chat-state', {
@@ -57,40 +89,10 @@ export function ChatPage({ chatId, isNewChat = false }: ChatPageProps) {
         throw new Error('No response body reader available')
       }
 
-      const decoder = new TextDecoder()
-      let buffer = ''
-      const loadedMessages: Message[] = []
-
-      while (true) {
-        const { done, value } = await reader.read()
-        if (done) break
-
-        buffer += decoder.decode(value, { stream: true })
-        const lines = buffer.split('\n')
-        buffer = lines.pop() || ''
-
-        for (const line of lines) {
-          if (!line.trim()) continue
-
-          try {
-            const streamMsg: StreamChatMessage = JSON.parse(line)
-            
-            if (streamMsg.id === '__cutoff__') {
-              continue
-            }
-            
-            if (streamMsg.id !== '__state__') {
-              const message = streamChatMessageToMessage(streamMsg)
-              loadedMessages.push(message)
-            }
-          } catch (error) {
-            console.warn('Failed to parse loading message:', line, error)
-          }
-        }
-      }
-
-      loadedMessages.sort((a, b) => (a.sort || 0) - (b.sort || 0))
-      setMessages(loadedMessages)
+      await iterateStream(reader, (msg) => {
+        if (msg.id === '__state__') return
+        upsertMessageFromStream(msg)
+      })
 
       posthog.capture('chat_loaded', { chat_id: existingChatId })
     } catch (error: any) {
@@ -164,66 +166,12 @@ export function ChatPage({ chatId, isNewChat = false }: ChatPageProps) {
 
     try {
       if (isNewChat || !chatId) {
-        // Create new chat thread
-        const newChatId = await createNewChatThread(currentInput)
-        if (!newChatId) throw new Error('Chat creation failed')
-
-        // Add user message to UI
-        const messageId = `${Date.now()}-message`
-        const initialUserMessage: Message = {
-          role: 'user',
-          content: [{ type: 'text', text: currentInput }],
-          id: messageId,
-          sort: 0,
-        }
-        setMessages([initialUserMessage])
-
-        // Stream the initial message response
-        const response2 = await fetch('/api/stream-chat-state', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            input: currentInput,
-            chatId: newChatId,
-            messageId: messageId,
-          }),
-        })
-        if (!response2.ok) {
-          const err = await response2.text()
-          throw new Error(`Stream error: ${response2.status} ${err}`)
-        }
-        const reader2 = response2.body?.getReader()
-        const decoder2 = new TextDecoder()
-        let buf2 = ''
-        while (reader2) {
-          const { done, value } = await reader2.read()
-          if (done) break
-          buf2 += decoder2.decode(value, { stream: true })
-          const lines2 = buf2.split('\n')
-          buf2 = lines2.pop() || ''
-          for (const line of lines2) {
-            if (!line.trim()) continue
-            try {
-              const streamMsg: StreamChatMessage = JSON.parse(line)
-              if (streamMsg.id === '__state__' || streamMsg.id === '__cutoff__') continue
-              const msg = streamChatMessageToMessage(streamMsg)
-              setMessages(prev => {
-                const updated = [...prev]
-                const idx = updated.findIndex(m => m.id === streamMsg.id)
-                if (idx !== -1 && streamMsg.isDelta && updated[idx].content[0].type === 'text') {
-                  updated[idx] = { ...updated[idx], content: [{ type: 'text', text: updated[idx].content[0].text + streamMsg.content }], isInProcess: streamMsg.isInProcess, isDelta: streamMsg.isDelta, sort: streamMsg.sort }
-                } else if (idx !== -1) {
-                  updated[idx] = msg
-                } else {
-                  updated.push(msg)
-                }
-                return updated.sort((a, b) => (a.sort || 0) - (b.sort || 0))
-              })
-            } catch {}
-          }
-        }
-        // Navigate to chat page
+        // New chat: generate a UUID, store initial message, and navigate
+        const newChatId = uuidv4()
+        localStorage.setItem(`initialMessage:${newChatId}`, currentInput)
+        posthog.capture('chat_new_thread_created', { chat_id: newChatId })
         router.push(`/chats/${newChatId}`)
+        return
       } else {
         // Send message to existing chat
         const messageId = `${Date.now()}-message`
@@ -256,59 +204,10 @@ export function ChatPage({ chatId, isNewChat = false }: ChatPageProps) {
           throw new Error('No response body reader available')
         }
 
-        const decoder = new TextDecoder()
-        let buffer = ''
-
-        while (true) {
-          const { done, value } = await reader.read()
-          if (done) break
-
-          buffer += decoder.decode(value, { stream: true })
-          const lines = buffer.split('\n')
-          buffer = lines.pop() || ''
-
-          for (const line of lines) {
-            if (!line.trim()) continue
-
-            try {
-              const streamMsg: StreamChatMessage = JSON.parse(line)
-              
-              if (streamMsg.id === '__state__' || streamMsg.id === '__cutoff__') {
-                continue
-              }
-
-              const message = streamChatMessageToMessage(streamMsg)
-
-              setMessages(prev => {
-                const updated = [...prev]
-                const existingIndex = updated.findIndex(m => m.id === streamMsg.id)
-                
-                if (existingIndex !== -1) {
-                  if (streamMsg.isDelta && updated[existingIndex].content[0]?.type === 'text') {
-                    updated[existingIndex] = {
-                      ...updated[existingIndex],
-                      content: [{
-                        type: 'text',
-                        text: updated[existingIndex].content[0].text + streamMsg.content
-                      }],
-                      isInProcess: streamMsg.isInProcess,
-                      isDelta: streamMsg.isDelta,
-                      sort: streamMsg.sort
-                    }
-                  } else {
-                    updated[existingIndex] = message
-                  }
-                } else {
-                  updated.push(message)
-                }
-                
-                return updated.sort((a, b) => (a.sort || 0) - (b.sort || 0))
-              })
-            } catch (error) {
-              console.warn('Failed to parse streaming message:', line, error)
-            }
-          }
-        }
+        await iterateStream(reader, (msg) => {
+          if (msg.id === '__state__') return
+          upsertMessageFromStream(msg)
+        })
 
         posthog.capture('chat_message_sent', { 
           input_length: currentInput.length,
@@ -365,6 +264,69 @@ export function ChatPage({ chatId, isNewChat = false }: ChatPageProps) {
     if (isNewChat) return 'Cube D3 Chat (New Thread)'
     return `Cube D3 Chat (Chat ID: ${chatId?.toString().substring(0, 8)}...)`
   }
+
+  // Helper: read streaming response and feed each parsed StreamChatMessage to a callback
+  const iterateStream = async (
+    reader: ReadableStreamDefaultReader<Uint8Array>,
+    onStreamMsg: (msg: StreamChatMessage) => void,
+  ) => {
+    const decoder = new TextDecoder()
+    let buffer = ''
+
+    while (true) {
+      const { done, value } = await reader.read()
+      if (done) break
+
+      buffer += decoder.decode(value, { stream: true })
+      const lines = buffer.split('\n')
+      buffer = lines.pop() || ''
+
+      for (const line of lines) {
+        if (!line.trim()) continue
+        try {
+          const streamMsg: StreamChatMessage = JSON.parse(line)
+          if (streamMsg.id === '__state__' || streamMsg.id === '__cutoff__') continue
+          onStreamMsg(streamMsg)
+        } catch (err) {
+          console.warn('Failed to parse streaming message:', line, err)
+        }
+      }
+    }
+  }
+
+  // Helper: upsert a message coming from the stream into component state
+  const upsertMessageFromStream = useCallback((streamMsg: StreamChatMessage) => {
+    const msg = streamChatMessageToMessage(streamMsg)
+    setMessages(prev => {
+      const updated = [...prev]
+      const idx = updated.findIndex(m => m.id === streamMsg.id)
+      if (idx !== -1) {
+        if (
+          streamMsg.isDelta &&
+          updated[idx].content[0]?.type === 'text'
+        ) {
+          // Accumulate delta text
+          updated[idx] = {
+            ...updated[idx],
+            content: [
+              {
+                type: 'text',
+                text: updated[idx].content[0].text + streamMsg.content,
+              },
+            ],
+            isInProcess: streamMsg.isInProcess,
+            isDelta: streamMsg.isDelta,
+            sort: streamMsg.sort,
+          }
+        } else {
+          updated[idx] = msg
+        }
+      } else {
+        updated.push(msg)
+      }
+      return updated.sort((a, b) => (a.sort || 0) - (b.sort || 0))
+    })
+  }, [])
 
   return (
     <main className="flex min-h-screen max-h-screen">
