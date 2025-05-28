@@ -1,7 +1,7 @@
 import httpx
 import json
 import uuid # Added for payload generation
-from httpx_sse import connect_sse, ServerSentEvent
+from httpx_sse import connect_sse, aconnect_sse, ServerSentEvent
 from typing import Any, AsyncIterable, Iterable, Optional, Generator, AsyncGenerator
 
 from .config import get_a2a_headers
@@ -131,20 +131,15 @@ class BaseA2AClient:
 
     async def subscribe_async(self, payload: dict[str, Any], timeout: Optional[float] = None) -> AsyncGenerator[ServerSentEvent, None]:
         """Establishes a generic asynchronous SSE connection and yields events."""
-        sync_client = httpx.Client(headers=self.headers, timeout=timeout)
-        try:
-            with connect_sse(sync_client, "POST", self.agent_url, json=payload) as event_source:
-                async for sse in event_source.aiter_sse():
-                    yield sse
-        except httpx.RequestError as e:
-            sync_client.close()
-            raise A2AStreamError(f"SSE Connection Error: {e}") from e
-        except Exception as e:
-            sync_client.close()
-            raise A2AStreamError(f"SSE Error: An unexpected error occurred: {e}") from e
-        finally:
-            if not sync_client.is_closed:
-                sync_client.close()
+        async with httpx.AsyncClient(headers=self.headers, timeout=timeout) as client:
+            try:
+                async with aconnect_sse(client, "POST", self.agent_url, json=payload) as event_source:
+                    async for sse in event_source.aiter_sse():
+                        yield sse
+            except httpx.RequestError as e:
+                raise A2AStreamError(f"SSE Connection Error: {e}") from e
+            except Exception as e:
+                raise A2AStreamError(f"SSE Error: An unexpected error occurred: {e}") from e
 
     # --- Specific Task Methods ---
 
@@ -171,7 +166,6 @@ class BaseA2AClient:
         """Asynchronously sends a task and subscribes to updates using tasks/sendSubscribe."""
         sid = session_id or uuid.uuid4().hex
         payload = create_send_subscribe_payload(task_id, sid, message_text)
-        # Use async for to iterate and yield each item
         async for sse in self.subscribe_async(payload, timeout=timeout):
             yield sse
 
