@@ -117,44 +117,6 @@ export function ChatPage({ chatId, isNewChat = false }: ChatPageProps) {
     }
   }, [messages])
 
-  const createNewChatThread = async (initialMessage: string): Promise<string | null> => {
-    try {
-      setIsCreatingChat(true)
-      
-      const response = await fetch('/api/create-chat-thread', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          initialMessage: initialMessage,
-          agentId: 18,
-          workbookId: 38
-        })
-      })
-
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || `Error creating chat thread: ${response.status}`)
-      }
-
-      const data = await response.json()
-      console.log('Created chat thread:', data)
-      
-      const newChatId = data.uuid
-      if (!newChatId) {
-        throw new Error('No chat ID returned from chat thread creation')
-      }
-
-      // Return new Chat ID for further processing
-      return newChatId
-    } catch (error: any) {
-      console.error('Error creating chat thread:', error)
-      setErrorMessage(`Failed to create chat thread: ${error.message}`)
-      return null
-    } finally {
-      setIsCreatingChat(false)
-    }
-  }
-
   const handleChatSubmit = async (e?: React.FormEvent<HTMLFormElement>) => {
     if (e) e.preventDefault()
     if (!chatInput.trim()) return
