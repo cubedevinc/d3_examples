@@ -265,9 +265,10 @@ export function ChatPage({ chatId, isNewChat = false }: ChatPageProps) {
       if (idx !== -1) {
         if (
           streamMsg.isDelta &&
-          updated[idx].content[0]?.type === 'text'
+          updated[idx].content[0]?.type === 'text' &&
+          !streamMsg.toolCall // Don't accumulate delta for tool calls
         ) {
-          // Accumulate delta text
+          // Accumulate delta text for regular messages
           updated[idx] = {
             ...updated[idx],
             content: [
@@ -281,6 +282,7 @@ export function ChatPage({ chatId, isNewChat = false }: ChatPageProps) {
             sort: streamMsg.sort,
           }
         } else {
+          // Replace entire message (important for tool calls with results)
           updated[idx] = msg
         }
       } else {

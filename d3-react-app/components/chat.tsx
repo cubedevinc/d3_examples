@@ -1,9 +1,7 @@
-import { Message, ToolCall } from '@/types/messages'
-import { FragmentSchema } from '@/lib/schema'
-import { ExecutionResult } from '@/lib/types'
-import { DeepPartial } from 'ai'
-import { LoaderIcon, Terminal, Wrench, Brain, GitBranch } from 'lucide-react'
+import { Message, ToolCall, extractChartDataFromToolCall, isChartToolCall } from '@/types/messages'
+import { LoaderIcon, Terminal, Wrench, Brain, GitBranch, BarChart3 } from 'lucide-react'
 import { useEffect } from 'react'
+import { VegaChart } from './vega-chart'
 
 export function Chat({
   messages,
@@ -12,10 +10,7 @@ export function Chat({
 }: {
   messages: Message[]
   isLoading: boolean
-  setCurrentPreview: (preview: {
-    fragment: DeepPartial<FragmentSchema> | undefined
-    result: ExecutionResult | undefined
-  }) => void
+  setCurrentPreview: (preview: any) => void
 }) {
   useEffect(() => {
     const chatContainer = document.getElementById('chat-container')
@@ -48,13 +43,38 @@ export function Chat({
       parsedResult = toolCall.result
     }
 
+    // Check if this is a chart tool call
+    const chartData = extractChartDataFromToolCall(toolCall)
+    const isChart = isChartToolCall(toolCall)
+
     return (
       <div key={toolCall.id} className="mt-2 p-3 border rounded-lg bg-muted/50">
         <div className="flex items-center gap-2 mb-2">
-          <Wrench className="w-4 h-4 text-blue-500" />
-          <span className="font-medium text-sm">Tool Call: {toolCall.function?.name || toolCall.type}</span>
+          {isChart ? (
+            <BarChart3 className="w-4 h-4 text-blue-500" />
+          ) : (
+            <Wrench className="w-4 h-4 text-blue-500" />
+          )}
+          <span className="font-medium text-sm">
+            {isChart ? 'Chart Generated' : `Tool Call: ${toolCall.function?.name || toolCall.type}`}
+          </span>
         </div>
-        {parsedArguments && (
+        
+        {/* Render chart if this is a chart tool call */}
+        {chartData && chartData.vegaSpec && (
+          <div className="mb-2">
+            <VegaChart
+              data={chartData.data}
+              schema={chartData.schema}
+              vegaSpec={chartData.vegaSpec}
+              width={450}
+              height={300}
+            />
+          </div>
+        )}
+
+        {/* Show arguments for non-chart tool calls or if requested */}
+        {parsedArguments && !isChart && (
           <div className="mb-2">
             <span className="text-xs text-muted-foreground">Arguments:</span>
             <pre className="text-xs bg-background p-2 rounded mt-1 overflow-x-auto">
@@ -65,16 +85,20 @@ export function Chat({
             </pre>
           </div>
         )}
-        {parsedResult && (
-          <div>
-            <span className="text-xs text-muted-foreground">Result:</span>
+        
+        {/* Show result for non-chart tool calls in collapsed form */}
+        {parsedResult && !isChart && (
+          <details className="cursor-pointer">
+            <summary className="text-xs text-muted-foreground hover:text-foreground">
+              View raw result
+            </summary>
             <pre className="text-xs bg-background p-2 rounded mt-1 overflow-x-auto max-h-40">
               {typeof parsedResult === 'string' 
                 ? parsedResult 
                 : JSON.stringify(parsedResult, null, 2)
               }
             </pre>
-          </div>
+          </details>
         )}
       </div>
     )
@@ -176,7 +200,7 @@ export function Chat({
               </div>
               <div className="pl-2 pr-4 flex flex-col">
                 <span className="font-bold font-sans text-sm text-primary">
-                  {message.object.title}
+                  {message.object?.title || 'Fragment'}
                 </span>
                 <span className="font-sans text-sm text-muted-foreground">
                   Click to see fragment

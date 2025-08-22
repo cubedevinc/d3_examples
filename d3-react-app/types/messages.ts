@@ -1,5 +1,3 @@
-import { DeepPartial } from 'ai'
-
 // Types for the E2B Fragments schema (simplified)
 export type FragmentSchema = {
   title?: string
@@ -62,11 +60,31 @@ export type ToolCall = {
   result?: any
 }
 
+// Chart-related types
+export type ChartData = {
+  data?: any[]
+  schema?: Array<{
+    name: string
+    columnType: string
+  }>
+  vegaSpec?: any
+}
+
+export type ParsedToolCallResult = {
+  data?: any[]
+  schema?: Array<{
+    name: string
+    columnType: string
+  }>
+  vegaSpec?: any
+  [key: string]: any
+}
+
 export type Message = {
   role: 'user' | 'assistant'
   content: MessageText[] | MessageCode[] | MessageImage[]
   id?: string
-  object?: DeepPartial<FragmentSchema>
+  object?: Partial<FragmentSchema>
   result?: ExecutionResult
   thinking?: string
   graphPath?: string[]
@@ -120,6 +138,35 @@ export function parseStreamChatResponse(data: string): StreamChatMessage[] {
   }
 
   return messages
+}
+
+export function extractChartDataFromToolCall(toolCall: ToolCall): ChartData | null {
+  if (!toolCall.result || typeof toolCall.result !== 'string') {
+    return null;
+  }
+
+  try {
+    const parsedResult: ParsedToolCallResult = JSON.parse(toolCall.result);
+    
+    // Check if this is a chart-related tool call with the expected data structure
+    if (parsedResult.vegaSpec || parsedResult.data || parsedResult.schema) {
+      return {
+        data: parsedResult.data,
+        schema: parsedResult.schema,
+        vegaSpec: parsedResult.vegaSpec
+      };
+    }
+  } catch (error) {
+    console.warn('Failed to parse tool call result for chart data:', error);
+  }
+
+  return null;
+}
+
+export function isChartToolCall(toolCall: ToolCall): boolean {
+  return toolCall.function?.name === 'cubeSqlApiWithChart' || 
+         toolCall.function?.name === 'cubeSqlApi' ||
+         (toolCall.result && extractChartDataFromToolCall(toolCall) !== null);
 }
 
 export function streamChatMessageToMessage(
