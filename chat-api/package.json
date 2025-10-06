@@ -1,0 +1,16 @@
+{
+  "name": "chat-api",
+  "version": "1.0.0",
+  "description": "Cube Chat API example",
+  "main": "chat.js",
+  "scripts": {
+    "start": "node chat.js"
+  },
+  "keywords": [
+    "cube",
+    "chat",
+    "api"
+  ],
+  "author": "",
+  "license": "MIT"
+}
