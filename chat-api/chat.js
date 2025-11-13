@@ -1,10 +1,25 @@
 const https = require('https');
+const http = require('http');
+const { URL } = require('url');
 
 // Configuration from environment variables
 const TENANT_NAME = process.env.CUBE_TENANT_NAME;
 const AGENT_ID = process.env.CUBE_AGENT_ID;
 const API_KEY = process.env.CUBE_API_KEY;
 const CHAT_ID = `chat-${Date.now()}`;
+
+// API URLs - can be overridden for local development
+const CUBE_API_URL = process.env.CUBE_API_URL || `https://${TENANT_NAME}.cubecloud.dev`;
+const AI_ENGINEER_URL = process.env.AI_ENGINEER_URL || 'https://ai-engineer.cubecloud.dev';
+
+// Parse URLs to extract protocol and host
+const cubeApiUrl = new URL(CUBE_API_URL);
+const aiEngineerUrl = new URL(AI_ENGINEER_URL);
+
+// Helper to get the appropriate protocol module
+function getProtocol(url) {
+  return url.protocol === 'https:' ? https : http;
+}
 
 // Validate required environment variables
 if (!TENANT_NAME || !AGENT_ID || !API_KEY) {
@@ -22,7 +37,8 @@ function generateSession(externalId = 'user@example.com', userAttributes = []) {
     });
 
     const options = {
-      hostname: `${TENANT_NAME}.cubecloud.dev`,
+      hostname: cubeApiUrl.hostname,
+      port: cubeApiUrl.port,
       path: '/api/v1/embed/generate-session',
       method: 'POST',
       headers: {
@@ -32,7 +48,7 @@ function generateSession(externalId = 'user@example.com', userAttributes = []) {
       }
     };
 
-    const req = https.request(options, (res) => {
+    const req = getProtocol(cubeApiUrl).request(options, (res) => {
       let body = '';
       res.on('data', (chunk) => body += chunk);
       res.on('end', () => {
@@ -57,7 +73,8 @@ function getToken(sessionId) {
     const data = JSON.stringify({ sessionId });
 
     const options = {
-      hostname: `${TENANT_NAME}.cubecloud.dev`,
+      hostname: cubeApiUrl.hostname,
+      port: cubeApiUrl.port,
       path: '/api/v1/embed/session/token',
       method: 'POST',
       headers: {
@@ -67,7 +84,7 @@ function getToken(sessionId) {
       }
     };
 
-    const req = https.request(options, (res) => {
+    const req = getProtocol(cubeApiUrl).request(options, (res) => {
       let body = '';
       res.on('data', (chunk) => body += chunk);
       res.on('end', () => {
@@ -95,7 +112,8 @@ function streamChat(token, message) {
     });
 
     const options = {
-      hostname: 'ai-engineer.cubecloud.dev',
+      hostname: aiEngineerUrl.hostname,
+      port: aiEngineerUrl.port,
       path: `/api/v1/public/${TENANT_NAME}/agents/${AGENT_ID}/chat/stream-chat-state`,
       method: 'POST',
       headers: {
@@ -105,7 +123,7 @@ function streamChat(token, message) {
       }
     };
 
-    const req = https.request(options, (res) => {
+    const req = getProtocol(aiEngineerUrl).request(options, (res) => {
       console.log(`\nStatus: ${res.statusCode}\n`);
 
       res.on('data', (chunk) => {
@@ -183,7 +201,12 @@ async function main() {
 
     await streamChat(token, message);
   } catch (error) {
-    console.error('Error:', error.message);
+    console.error('\nError:', error.message);
+    if (error.code === 'ECONNREFUSED') {
+      console.error('\nConnection refused. Please ensure:');
+      console.error(`  - Cube API is running at: ${CUBE_API_URL}`);
+      console.error(`  - AI Engineer is running at: ${AI_ENGINEER_URL}`);
+    }
     process.exit(1);
   }
 }

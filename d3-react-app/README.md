@@ -41,9 +41,9 @@ This application provides a modern chat interface that connects to D3's AI Agent
    D3_API_AGENT_URL=your_d3_api_agent_url_here
    ```
 
-   **Important**: 
-   - The `D3_API_AGENT_URL` should be set to the endpoint URL of your D3 agent, which can be found in the Cube Cloud Management Console under the MCP/A2A section.
-   - The `D3_API_SECRET` can be found in the same location by clicking "Regenerate secret" in the Cube Cloud Management Console.
+   **Important**:
+   - The `D3_API_AGENT_URL` should be set to the endpoint URL of your D3 agent, which can be found in the Cube Cloud Management Console.
+   - The `D3_API_SECRET` is your API secret used for JWT token generation.
 
 4. **Run the development server**
    ```bash
