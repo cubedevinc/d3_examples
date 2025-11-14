@@ -4,7 +4,7 @@ import { Chat as D3ChatDisplay } from '@/components/chat'
 import { ChatInput as D3ChatInput } from '@/components/chat-input'
 import { NavBar } from '@/components/navbar'
 import { Message, streamChatMessageToMessage, StreamChatMessage } from '@/types/messages'
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import { usePostHog } from 'posthog-js/react'
 import { useRouter } from 'next/navigation'
 import { v4 as uuidv4 } from 'uuid'
@@ -21,11 +21,22 @@ export function ChatPage({ chatId, isNewChat = false }: ChatPageProps) {
   const [errorMessage, setErrorMessage] = useState('')
   const [isCreatingChat, setIsCreatingChat] = useState(false)
   const [isLoadingExistingChat, setIsLoadingExistingChat] = useState(false)
-  
+
   const router = useRouter()
   const posthog = usePostHog()
 
+  // Track which chat IDs we've already started loading to prevent duplicates
+  // This is important for React 18 Strict Mode which runs effects twice in development
+  // Using an object instead of Set for Next.js/Turbopack compatibility
+  const loadedChatsRef = useRef<Record<string, boolean>>({})
+
   const loadExistingChat = useCallback(async (existingChatId: string) => {
+    // Prevent duplicate loading (React 18 Strict Mode runs effects twice)
+    if (loadedChatsRef.current[existingChatId]) {
+      return
+    }
+    loadedChatsRef.current[existingChatId] = true
+
     try {
       setIsLoadingExistingChat(true)
       setErrorMessage('')
@@ -35,12 +46,13 @@ export function ChatPage({ chatId, isNewChat = false }: ChatPageProps) {
       if (storedInitial) {
         localStorage.removeItem(`initialMessage:${existingChatId}`)
         // Add initial user message to UI
-        const messageId = `${Date.now()}-message`
+        const timestamp = Date.now()
+        const messageId = `${timestamp}-message`
         const initialUserMessage: Message = {
           role: 'user',
           content: [{ type: 'text', text: storedInitial }],
           id: messageId,
-          sort: 0,
+          sort: 1, // Use a low sort value so it appears first
         }
         setMessages([initialUserMessage])
 
@@ -63,6 +75,8 @@ export function ChatPage({ chatId, isNewChat = false }: ChatPageProps) {
         }
         await iterateStream(reader, (msg) => {
           if (msg.id === '__state__') return
+          // Skip user messages from stream since we already added it locally
+          if (msg.role === 'user') return
           upsertMessageFromStream(msg)
         })
         posthog.capture('chat_loaded', { chat_id: existingChatId })
@@ -91,6 +105,8 @@ export function ChatPage({ chatId, isNewChat = false }: ChatPageProps) {
 
       await iterateStream(reader, (msg) => {
         if (msg.id === '__state__') return
+        // Skip user messages since they should already be in the chat history
+        if (msg.role === 'user') return
         upsertMessageFromStream(msg)
       })
 
@@ -98,6 +114,8 @@ export function ChatPage({ chatId, isNewChat = false }: ChatPageProps) {
     } catch (error: any) {
       console.error('Error loading existing chat:', error)
       setErrorMessage(`Failed to load chat: ${error.message}`)
+      // Remove from loaded set on error so user can retry
+      delete loadedChatsRef.current[existingChatId]
     } finally {
       setIsLoadingExistingChat(false)
     }
@@ -136,14 +154,19 @@ export function ChatPage({ chatId, isNewChat = false }: ChatPageProps) {
         return
       } else {
         // Send message to existing chat
-        const messageId = `${Date.now()}-message`
+        const timestamp = Date.now()
+        const messageId = `${timestamp}-message`
+
+        // Use a sort value that ensures this message appears after existing ones
+        // but will be properly ordered when server response arrives
+        const maxSort = Math.max(...messages.map(m => m.sort || 0), 0)
         const userMessage: Message = {
           role: 'user',
           content: [{ type: 'text', text: currentInput }],
           id: messageId,
-          sort: 0
+          sort: maxSort + 1
         }
-        
+
         setMessages(prev => [...prev, userMessage])
 
         const response = await fetch('/api/stream-chat-state', {
@@ -168,6 +191,8 @@ export function ChatPage({ chatId, isNewChat = false }: ChatPageProps) {
 
         await iterateStream(reader, (msg) => {
           if (msg.id === '__state__') return
+          // Skip user messages since we already added it locally
+          if (msg.role === 'user') return
           upsertMessageFromStream(msg)
         })
 
