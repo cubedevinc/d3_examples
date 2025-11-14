@@ -1,7 +1,7 @@
 'use client'
 
-import { Chat as D3ChatDisplay } from '@/components/chat'
-import { ChatInput as D3ChatInput } from '@/components/chat-input'
+import { Chat as ChatDisplay } from '@/components/chat'
+import { ChatInput } from '@/components/chat-input'
 import { NavBar } from '@/components/navbar'
 import { Message, streamChatMessageToMessage, StreamChatMessage } from '@/types/messages'
 import { useEffect, useState, useCallback, useRef } from 'react'
@@ -248,8 +248,8 @@ export function ChatPage({ chatId, isNewChat = false }: ChatPageProps) {
   const getStatusText = () => {
     if (isLoadingExistingChat) return 'Loading chat...'
     if (isCreatingChat) return 'Creating new chat...'
-    if (isNewChat) return 'Cube D3 Chat (New Thread)'
-    return `Cube D3 Chat (Chat ID: ${chatId?.toString().substring(0, 8)}...)`
+    if (isNewChat) return 'Cube Agent Chat (New Thread)'
+    return `Cube Agent Chat (Chat ID: ${chatId?.toString().substring(0, 8)}...)`
   }
 
   // Helper: read streaming response and feed each parsed StreamChatMessage to a callback
@@ -325,12 +325,12 @@ export function ChatPage({ chatId, isNewChat = false }: ChatPageProps) {
           canClear={messages.length > 0} 
           onNewChat={handleNewChat}
         />
-        <D3ChatDisplay
+        <ChatDisplay
           messages={messages}
           isLoading={isLoading || isCreatingChat || isLoadingExistingChat}
           setCurrentPreview={() => {}}
         />
-        <D3ChatInput
+        <ChatInput
           retry={handleChatSubmit}
           isErrored={!!errorMessage}
           errorMessage={errorMessage}
@@ -344,7 +344,7 @@ export function ChatPage({ chatId, isNewChat = false }: ChatPageProps) {
           <div className="text-sm text-muted-foreground p-2">
             {getStatusText()}
           </div>
-        </D3ChatInput>
+        </ChatInput>
       </div>
     </main>
   )

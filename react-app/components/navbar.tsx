@@ -29,7 +29,7 @@ export function NavBar({
       <div className="flex flex-1 items-center">
         <Link href="/" className="flex items-center gap-2" target="_blank">
           <Logo width={24} height={24} />
-          <h1 className="whitespace-pre">Cube D3 Demo App</h1>
+          <h1 className="whitespace-pre">Cube Agent Demo App</h1>
         </Link>
       </div>
       <div className="flex items-center gap-1 md:gap-4">
