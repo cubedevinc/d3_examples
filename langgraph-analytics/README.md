@@ -330,8 +330,8 @@ If authentication fails:
 
 ## Learn More
 
+- [Cube AI Agents Documentation](https://docs.cube.dev/)
 - [LangGraph.js Documentation](https://langchain-ai.github.io/langgraphjs/)
-- [Cube AI Agents Documentation](https://docs.cube.dev/ai-agents)
 - [LangChain.js Documentation](https://js.langchain.com/)
 
 ## Related Examples
