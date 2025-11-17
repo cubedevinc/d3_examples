@@ -1,7 +1,8 @@
 {
   "name": "chat-api",
   "version": "1.0.0",
-  "description": "Cube Chat API example",
+  "description": "Cube Chat API example using the shared Cube Agent Client library",
+  "type": "module",
   "main": "chat.js",
   "scripts": {
     "start": "node chat.js"
@@ -9,7 +10,8 @@
   "keywords": [
     "cube",
     "chat",
-    "api"
+    "api",
+    "agent"
   ],
   "author": "",
   "license": "MIT"

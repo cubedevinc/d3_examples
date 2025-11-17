@@ -37,7 +37,9 @@ export function ChatInput({
     if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
       e.preventDefault()
       if (e.currentTarget.checkValidity()) {
-        handleSubmit(e)
+        // Let the form's onSubmit handler handle the submission
+        // Don't call handleSubmit directly to avoid double submission
+        e.currentTarget.requestSubmit()
       } else {
         e.currentTarget.reportValidity()
       }
