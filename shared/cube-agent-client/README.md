@@ -174,20 +174,6 @@ try {
 }
 ```
 
-## Local Development
-
-When developing locally, use the following configuration:
-
-```javascript
-const client = new CubeAgentClient({
-  tenantName: 'localhost',
-  agentId: 2,
-  apiKey: 'your-local-api-key',
-  cubeApiUrl: 'http://localhost:14300',
-  aiEngineerUrl: 'http://localhost:4201'
-});
-```
-
 ## How It Works
 
 1. **Session Generation**: Creates an embedded session with Cube Cloud
