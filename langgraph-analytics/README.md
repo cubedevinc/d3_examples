@@ -63,13 +63,6 @@ Edit `.env`:
 CUBE_TENANT_NAME=your-tenant
 CUBE_AGENT_ID=1
 CUBE_API_KEY=your-api-key
-
-# Local Development
-# CUBE_TENANT_NAME=localhost
-# CUBE_AGENT_ID=2
-# CUBE_API_KEY=your-local-key
-# CUBE_API_URL=http://localhost:14300
-# AI_ENGINEER_URL=http://localhost:4201
 ```
 
 ## Usage
