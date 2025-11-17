@@ -48,18 +48,6 @@ const client = new CubeAgentClient({
 });
 ```
 
-### Environment Variables
-
-For local development:
-
-```bash
-CUBE_TENANT_NAME=localhost
-CUBE_AGENT_ID=2
-CUBE_API_KEY=your-api-key
-CUBE_API_URL=http://localhost:14300
-AI_ENGINEER_URL=http://localhost:4201
-```
-
 ## API Reference
 
 ### Methods
